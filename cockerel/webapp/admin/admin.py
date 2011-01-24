@@ -60,6 +60,20 @@ def signup():
     if request.method == 'POST':
         form = SignupForm.from_flat(request.form)
         if form.validate():
+            existingUser = User.query.filter_by(
+                username=request.form['username']).first()
+            if existingUser != None:
+                form['username'].add_error(
+                    'Username %s is taken' % form['username'].value)
+                gen = Generator()
+                return render_template("admin/signup.html", form=form, html=gen)
+            existingEmail = User.query.filter_by(
+                email=request.form['email']).first()
+            if existingEmail != None:
+                form['email'].add_error(
+                    'There is an account associated with %s.' % form['email'].value)
+                gen = Generator()
+                return render_template("admin/signup.html", form=form, html=gen)
             user = User(request.form['username'],
                        request.form['password'],
                        request.form['email'],
