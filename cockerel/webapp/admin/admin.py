@@ -34,9 +34,11 @@ def login():
                 if not user.activestatus:
                     form.add_error(
                         """Username %s need to be activated before 1st login.
-                        It can only be activated with the link sent to email of this username.""" %
+                        It can only be activated with the link sent to email
+                        of this username.""" %
                         form['username'].value)
-                    return render_template("admin/login.html", form=form, html=gen)
+                    return render_template("admin/login.html",
+                                           form=form, html=gen)
                 if user.check_password(request.form['password']):
                     g.user = user
                     set_user()
@@ -44,14 +46,14 @@ def login():
                         return redirect(request.args.get('next'))
                     else:
                         return redirect(url_for('frontend.index'))
-            form.add_error('Invalid username %s or password.' % form['username'].value)
+            form.add_error('Invalid username %s or password.' %
+                           form['username'].value)
             return render_template("admin/login.html", form=form, html=gen)
         else:
             return render_template("admin/login.html", form=form, html=gen)
     form = LoginForm()
     return render_template("admin/login.html",
-                           form=form,
-                           html=gen,
+                           form=form, html=gen,
                            **request.args)
 
 
@@ -73,14 +75,17 @@ def signup():
                 form['username'].add_error(
                     'Username %s is taken' % form['username'].value)
                 gen = Generator()
-                return render_template("admin/signup.html", form=form, html=gen)
+                return render_template("admin/signup.html",
+                                       form=form, html=gen)
             existingEmail = User.query.filter_by(
                 email=request.form['email']).first()
             if existingEmail != None:
                 form['email'].add_error(
-                    'There is an account associated with %s.' % form['email'].value)
+                    'There is an account associated with %s.' %
+                    form['email'].value)
                 gen = Generator()
-                return render_template("admin/signup.html", form=form, html=gen)
+                return render_template("admin/signup.html",
+                                       form=form, html=gen)
             user = User(request.form['username'],
                        request.form['password'],
                        request.form['email'],
@@ -93,16 +98,14 @@ def signup():
             form = SignupForm()
             form.add_error(send_activationcode(user))
             return render_template("admin/signup.html",
-                                   form=form,
-                                   html=gen)
+                                   form=form, html=gen)
         else:
-            return render_template("admin/signup.html", 
-                                   form=form, 
-                                   html=gen)
+            return render_template("admin/signup.html",
+                                   form=form, html=gen)
     form = SignupForm()
     return render_template("admin/signup.html",
-                           form=form,
-                           html=gen)
+                           form=form, html=gen)
+
 
 @admin.route('/activatelogin', methods=['GET', 'POST'])
 def activatelogin():
@@ -115,7 +118,8 @@ def activatelogin():
             if user == None:
                 form['username'].add_error(
                     'Username %s is invalid' % form['username'].value)
-                return render_template("admin/activatelogin.html", form=form, html=gen)
+                return render_template("admin/activatelogin.html",
+                                       form=form, html=gen)
             if get_activationcode(user) != request.args['activationcode']:
                 form.add_error(
                     'incorrect user name or invalid activation code %s.' %
@@ -138,6 +142,7 @@ def activatelogin():
                            form=form,
                            html=gen)
 
+
 def send_activationcode(user):
     sender = 'Cockerel@Cockerel.com'
     receivers = user.email
@@ -150,7 +155,9 @@ def send_activationcode(user):
 
     Hi %s,
 
-    Your username is %s.  Please use this link to activate your account %s.
+    Your username is %s.  Please use the link below to activate your account.
+
+    %s
 
     Thank you,
     Cockerel
@@ -170,9 +177,11 @@ def send_activationcode(user):
 #    except smtplib.SMTPException:
 #       return False
 
+
 def get_activationcode(user):
     return hashlib.sha1(user.username.lower() +
                         user.email.lower()).hexdigest()
+
 
 def check_user():
     g.user = User.query.filter_by(

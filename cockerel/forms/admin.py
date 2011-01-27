@@ -28,3 +28,8 @@ class SignupForm(Form):
                             validators=[Present()])
     output_schema = ['username', 'password', 'confirmPassword',
                      'email', 'firstname', 'lastname']
+
+
+class ActivateLoginForm(Form):
+    username = String.using(label='Username',
+                            validators=[Present()])
