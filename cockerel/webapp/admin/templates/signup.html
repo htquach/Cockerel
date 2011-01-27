@@ -1,17 +1,22 @@
 <form id="f_signup" actions="{{ url_for('admin.signup', **request.args) }}" method="POST">
-<dl>
-  {% for el in form.output_schema %}
-  <dt>{{ form[el].label }}</dt>
-  {% if (el == 'password' or el == 'confirmPassword') %}
-  <dd>{{ html.input(form[el], type='password') }}</dd>
-  {% else %}
-  <dd>{{ html.input(form[el]) }}</dd>
-  {% endif %}  
-  {% for error in form[el].errors %} 
-  <label>{{ error }}</label><br> 
-  {% endfor %} 
-  {% endfor %}
-</dl>
-{{ html.input(type='submit', value='join!') }}
+  <dl>
+    {% for el in form.output_schema %}
+    <dt>{{ form[el].label }}</dt>
+    {% if (el == 'password' or el == 'confirmPassword') %}
+    <dd>{{ html.input(form[el], type='password') }}</dd>
+    {% else %}
+    <dd>{{ html.input(form[el]) }}</dd>
+    {% endif %}
+    {% for error in form[el].errors %}
+    <label>{{ error }}</label><br>
+    {% endfor %} 
+    {% endfor %}
+    <ul>
+      {% for error in form.errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </dl>
+  {{ html.input(type='submit', value='join!') }}
 </form>
 
