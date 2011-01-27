@@ -1,5 +1,5 @@
 #
-from admin import LoginForm, SignupForm
+from admin import LoginForm, SignupForm, ActivateLoginForm
 
 from classes import AddEditClassForm
 
