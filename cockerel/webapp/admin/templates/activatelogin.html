@@ -1,0 +1,15 @@
+<form id="f_activatelogin" action="{{ url_for('admin.activatelogin', **request.args) }}" method="POST">
+  <dl>
+    <dt>{{ form.username.label }}</dt>
+    <dd>{{ html.input(form.username) }}</dd>
+    {% for error in form.username.errors %}
+    <label for="{{ form.username }}">{{ error }}</label>
+    {% endfor %}
+    <ul>
+      {% for error in form.errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </dl>
+  <p>{{ html.input(type='submit', value='activate') }}</p>
+</form>
