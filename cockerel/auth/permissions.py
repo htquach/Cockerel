@@ -11,7 +11,7 @@ integrated later will restrict the access to data in a more fine grained manner
 from flaskext.principal import (
     identity_loaded,
     Permission,
-    RoleNeed,
+    ActionNeed,
     UserNeed,
     )
 
@@ -35,10 +35,10 @@ class Permissions(dict):
 
 permissions = Permissions()
 
-permissions.read = Permission(RoleNeed('read'))
-permissions.insert = Permission(RoleNeed('insert'))
-permissions.modify = Permission(RoleNeed('modify'))
-permissions.delete = Permission(RoleNeed('delete'))
+permissions.read = Permission(ActionNeed('read'))
+permissions.insert = Permission(ActionNeed('insert'))
+permissions.modify = Permission(ActionNeed('modify'))
+permissions.delete = Permission(ActionNeed('delete'))
 permissions.full_access = permission(permissions.delete, permissions.insert,
                                      permissions.modify, permissions.read)
 
