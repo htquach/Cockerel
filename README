@@ -38,7 +38,7 @@ into. This can be done with:
 where 'Cockerel' is the directory where the repository resides.
 
 To start Cockerel run
-    python manager.py initd
+    python manager.py initdb
     python manager.py runserver
      
 To start Coqd run
