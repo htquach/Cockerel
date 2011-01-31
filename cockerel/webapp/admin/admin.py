@@ -12,8 +12,7 @@ from flask import (
 )
 from flatland.out.markup import Generator
 
-#TODO: import cockerel.auth.security does not work.
-#from cockerel.auth.security import get_activationcode
+from cockerel.auth.security import check_user, get_activationcode, set_user
 from cockerel.models.schema import db, User
 from cockerel.forms import LoginForm, SignupForm, ActivateLoginForm
 
@@ -41,7 +40,7 @@ def login():
                                            form=form, html=gen)
                 if user.check_password(request.form['password']):
                     g.user = user
-                    set_user()
+                    set_user(user)
                     if request.args:
                         return redirect(request.args.get('next'))
                     else:
@@ -66,6 +65,7 @@ def logout():
 @admin.route('/signup', methods=['GET', 'POST'])
 def signup():
     gen = Generator()
+    form = SignupForm()
     if request.method == 'POST':
         form = SignupForm.from_flat(request.form)
         if form.validate():
@@ -94,9 +94,9 @@ def signup():
                        False)
             db.session.add(user)
             db.session.commit()
-            #TODO work around since SMTP mail server is not setup.
+            send_activationcode(user)
+
             form = SignupForm()
-            form.add_error(send_activationcode(user))
             return render_template("admin/signup.html",
                                    form=form, html=gen)
         else:
@@ -124,6 +124,11 @@ def activatelogin():
                 form.add_error(
                     'incorrect user name or invalid activation code %s.' %
                     request.args['activationcode'])
+                activationURL = "http://127.0.0.1:5000" +\
+                                url_for('activatelogin',
+                                        activationcode=get_activationcode(user))
+                #TODO:  Work around until link sent to email feature is setup.
+                form.add_error(activationURL)
                 return render_template("admin/activatelogin.html",
                                        form=form,
                                        html=gen)
@@ -168,7 +173,6 @@ def send_activationcode(user):
            user.firstname,
            user.username,
            activationURL)
-    return sender, receivers, message
 #    TODO: Supply SMTP server information to use the email feature
 #    try:
 #       smtpObj = smtplib.SMTP('localhost')
@@ -176,20 +180,5 @@ def send_activationcode(user):
 #       return True
 #    except smtplib.SMTPException:
 #       return False
-
-
-def get_activationcode(user):
-    return hashlib.sha1(user.username.lower() +
-                        user.email.lower()).hexdigest()
-
-
-def check_user():
-    g.user = User.query.filter_by(
-        username=session.get('username')).first()
-
-
-def set_user():
-    session['username'] = g.user.username
-
 
 admin.before_app_request(check_user)
