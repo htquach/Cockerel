@@ -21,3 +21,14 @@ class Login(Page):
     @property
     def login_form(self):
         return browser.document['form#f_login']
+
+
+class ActivateLogin(Page):
+    @property
+    def offers_activatelogin_form(self):
+        return bool(browser.document.cssselect('form#f_activatelogin'))
+
+    @property
+    def activatelogin_form(self):
+        return browser.document['form#f_activatelogin']
+
