@@ -11,7 +11,7 @@ import hashlib
 from flask import g, session
 from flaskext.principal import Identity
 
-from .permissions import principals
+from cockerel.auth import principals
 from cockerel.models.schema import User
 
 

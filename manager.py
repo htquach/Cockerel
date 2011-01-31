@@ -6,6 +6,7 @@ from coqd.runner import main as coqd_main
 from cockerel.webapp import app
 from cockerel.utilities import new_app
 from cockerel.models import db, schema
+from cockerel.auth import principals
 
 
 def _make_context():
@@ -25,6 +26,11 @@ def initdb():
     with new_app(app).request_context(create_environ()):
         db.drop_all()
         db.create_all()
+
+
+@manager.command
+def initprincipal():
+    principals.app = app
 
 
 @manager.option('--serialize',  action="store_true",
