@@ -3,7 +3,7 @@ from werkzeug import generate_password_hash, check_password_hash
 from . import db
 
 
-user_classes = db.Table('user_classes', db.Model.metadata,
+users_classes = db.Table('users_classes', db.Model.metadata,
                      db.Column('user_id', db.Integer,
                                db.ForeignKey('users.id')),
                      db.Column('class_id', db.Integer,
@@ -15,6 +15,11 @@ lessons_classes = db.Table('lessons_classes', db.Model.metadata,
                            db.Column('class_id', db.Integer,
                                      db.ForeignKey('classes.id')))
 
+users_actions = db.Table('users_actions', db.Model.metadata,
+                           db.Column('user_id', db.Integer,
+                                     db.ForeignKey('users.id')),
+                           db.Column('action_id', db.Integer,
+                                     db.ForeignKey('actions.id')))
 
 class Theorem(db.Model):
     __tablename__ = 'theorems'
@@ -48,6 +53,22 @@ class Proof(db.Model):
         return '<Proof %r>' % self.proofscript
 
 
+class Action(db.Model):
+    __tablename__ = 'actions'
+    id = db.Column(db.Integer, primary_key=True)
+    action_name = db.Column(db.String(80), unique=True)
+
+    users = db.relationship('User',
+                            secondary=users_actions,
+                            backref='actions')
+
+    def __init__(self, action_name):
+        self.action_name = action_name
+
+    def __repr__(self):
+        return '<Action %s>' % self.action_name
+
+
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
@@ -57,12 +78,17 @@ class User(db.Model):
     firstname = db.Column(db.String(80))
     lastname = db.Column(db.String(80))
     activestatus = db.Column(db.Boolean)
-    # permissions = db.Column(db.Integer)
+
+#    actions = db.relationship('Action',
+#                              secondary=users_actions,
+#                              backref='users')
+
     proofs = db.relationship('Proof',
                              order_by=Proof.id,
                              backref='proofs')
 
-    def __init__(self, username, password, email=None, firstname=None, lastname=None, activestatus=False):
+    def __init__(self, username, password, email=None,
+                 firstname=None, lastname=None, activestatus=False):
         self.username = username
         self.set_password(password)
         self.email = email
@@ -93,7 +119,7 @@ class Classes(db.Model):
     owner = db.relationship('User', backref='owns')
 
     users = db.relationship('User',
-                              secondary=user_classes,
+                              secondary=users_classes,
                               backref='classes')
 
     def __init__(self, classname, description, owner):

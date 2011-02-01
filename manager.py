@@ -26,6 +26,15 @@ def initdb():
     with new_app(app).request_context(create_environ()):
         db.drop_all()
         db.create_all()
+        readaction = schema.Action("read")
+        insertaction = schema.Action("insert")
+        deleteaction = schema.Action("delete")
+        editaction = schema.Action("edit")
+        db.session.add(readaction)
+        db.session.add(insertaction)
+        db.session.add(deleteaction)
+        db.session.add(editaction)
+        db.session.commit()
 
 
 @manager.command
