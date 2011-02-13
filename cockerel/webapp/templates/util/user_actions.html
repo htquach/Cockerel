@@ -1,6 +1,6 @@
 <div id="useractions">
-  {% if session.username %}
-  <span>Hi, {{ session.username }}</span>
+  {% if g.identity %}
+  <span>Hi, {{ g.identity.name }}</span>
   <span><a id="logout" href="{{ url_for('admin.logout') }}">Logout</a></span>
   {% else %}
   <span><a id="signup" href="{{ url_for('admin.signup') }}">Signup</a></span>
