@@ -5,7 +5,7 @@ from flask import flash, g, request, redirect, url_for
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if g.user is None:
+        if getattr(g, "identity", None) is None:
             return redirect(url_for('admin.login', next=request.url))
         return f(*args, **kwargs)
     return decorated_function
@@ -14,10 +14,10 @@ def login_required(f):
 def permissions(f, permissions):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if g.user is None:
+        if getattr(g, "identity", None) is None:
             return redirect(url_for('admin.login', next=request.url))
         for perm in permissions:
-            if perm in g.user.permissions:
+            if perm in g.identity.permissions:
                 continue
             else:
                 flash("You don't have permission to do that", "error")
