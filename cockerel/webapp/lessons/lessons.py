@@ -1,3 +1,4 @@
+from httplib import UNAUTHORIZED, FORBIDDEN
 from flask import (
     flash,
     Module,
@@ -9,6 +10,12 @@ from flask import (
 from flatland.out.markup import Generator
 
 from cockerel.auth import login_required
+from cockerel.auth.permissions import (
+    read_action,
+    insert_action,
+    delete_action,
+    edit_action,
+    )
 from cockerel.forms import EditLessonForm
 from cockerel.models.schema import db, Classes, Lesson
 
@@ -23,6 +30,7 @@ def index():
 
 @lessons.route('/lessons/add/<int:class_id>', methods=['GET', 'POST'])
 @login_required
+@insert_action.require(http_exception=UNAUTHORIZED)
 def add(class_id):
     if request.method == 'POST':
         form = EditLessonForm.from_flat(request.form)
@@ -47,6 +55,10 @@ def add(class_id):
 
 @lessons.route('/lessons/edit/<int:lesson_id>', methods=['GET', 'POST'])
 @login_required
+@read_action.require(http_exception=FORBIDDEN)
+@insert_action.require(http_exception=FORBIDDEN)
+@delete_action.require(http_exception=FORBIDDEN)
+@edit_action.require(http_exception=FORBIDDEN)
 # @permissions('admin')
 def edit(lesson_id):
     lesson = Lesson.query.filter_by(id=lesson_id).first()
@@ -71,6 +83,7 @@ def edit(lesson_id):
 
 @lessons.route('/lessons/view/<int:lesson_id>')
 @login_required
+@read_action.require(http_exception=UNAUTHORIZED)
 def view(lesson_id):
     lesson = Lesson.query.filter_by(id=lesson_id).first()
     return render_template('lessons/view.html',

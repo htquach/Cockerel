@@ -5,6 +5,7 @@ classes.py
 Controller functions for classes. A class object allows you to add associated
 lesson plans.
 """
+from httplib import UNAUTHORIZED, FORBIDDEN
 
 from flask import (
     g,
@@ -17,6 +18,12 @@ from flask import (
 from flatland.out.markup import Generator
 
 from cockerel.auth import login_required
+from cockerel.auth.permissions import (
+    read_action,
+    insert_action,
+    delete_action,
+    edit_action,
+    )
 from cockerel.forms import AddEditClassForm
 from cockerel.models.schema import db, Classes
 
@@ -32,6 +39,8 @@ def index():
 
 @classes.route('/classes/add', methods=['GET', 'POST'])
 @login_required
+@read_action.require(http_exception=UNAUTHORIZED)
+@insert_action.require(http_exception=FORBIDDEN)
 def add():
     """Users can add classes if they are authenticated"""
     if request.method == 'POST':
@@ -55,7 +64,11 @@ def add():
 
 @classes.route('/classes/edit/<int:class_id>', methods=['GET', 'POST'])
 @login_required
-def edit():
+@read_action.require(http_exception=FORBIDDEN)
+@insert_action.require(http_exception=FORBIDDEN)
+@delete_action.require(http_exception=FORBIDDEN)
+@edit_action.require(http_exception=FORBIDDEN)
+def edit(class_id):
     """Make modifications to a class"""
     if request.method == 'POST':
         form = AddEditClassForm.from_flat(request.form)
