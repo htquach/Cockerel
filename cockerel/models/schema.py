@@ -56,17 +56,13 @@ class Proof(db.Model):
 class Action(db.Model):
     __tablename__ = 'actions'
     id = db.Column(db.Integer, primary_key=True)
-    action_name = db.Column(db.String(80), unique=True)
+    actionname = db.Column(db.String(80), unique=True)
 
-    users = db.relationship('User',
-                            secondary=users_actions,
-                            backref='actions')
-
-    def __init__(self, action_name):
-        self.action_name = action_name
+    def __init__(self, actionname):
+        self.actionname = actionname
 
     def __repr__(self):
-        return '<Action %s>' % self.action_name
+        return '<Action %s>' % self.actionname
 
 
 class User(db.Model):
@@ -79,22 +75,22 @@ class User(db.Model):
     lastname = db.Column(db.String(80))
     activestatus = db.Column(db.Boolean)
 
-#    actions = db.relationship('Action',
-#                              secondary=users_actions,
-#                              backref='users')
+    actions = db.relationship('Action',
+                              secondary=users_actions,
+                              backref='users')
 
     proofs = db.relationship('Proof',
                              order_by=Proof.id,
                              backref='proofs')
 
     def __init__(self, username, password, email=None,
-                 firstname=None, lastname=None, activestatus=False):
+                 firstname=None, lastname=None):
         self.username = username
         self.set_password(password)
         self.email = email
         self.firstname = firstname
         self.lastname = lastname
-        self.activestatus = activestatus
+        self.activestatus = False
 
     def set_password(self, password):
         self.pw_hash = generate_password_hash(password)
