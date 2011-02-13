@@ -10,11 +10,15 @@ from flask import (
     session,
     url_for,
 )
+
+from flaskext.principal import Identity, identity_changed, ActionNeed
 from flatland.out.markup import Generator
 
-from cockerel.auth.security import check_user, get_activationcode, set_user
-from cockerel.models.schema import db, User
+from cockerel.models.schema import db, User, Action
 from cockerel.forms import LoginForm, SignupForm, ActivateLoginForm
+from cockerel.auth.security import get_activationcode, load_identity, save_identity
+from cockerel.auth.permissions import read_action
+import cockerel.webapp
 
 admin = Module(__name__)
 
@@ -39,8 +43,9 @@ def login():
                     return render_template("admin/login.html",
                                            form=form, html=gen)
                 if user.check_password(request.form['password']):
-                    g.user = user
-                    set_user(user)
+                    save_identity(user)
+                    identity_changed.send(cockerel.webapp.app,
+                                          identity=Identity(user.username))
                     if request.args:
                         return redirect(request.args.get('next'))
                     else:
@@ -58,7 +63,7 @@ def login():
 
 @admin.route('/logout', methods=['GET'])
 def logout():
-    session.pop('username', None)
+    session.pop('identity', None)
     return redirect(url_for('frontend.index'))
 
 
@@ -90,19 +95,20 @@ def signup():
                        request.form['password'],
                        request.form['email'],
                        request.form['firstname'],
-                       request.form['lastname'],
-                       False)
+                       request.form['lastname'])
+            for need in read_action.needs:
+                user.actions.append(Action.query.filter_by(
+                        actionname=(need.value)).first())
             db.session.add(user)
             db.session.commit()
             send_activationcode(user)
 
-            form = SignupForm()
-            return render_template("admin/signup.html",
+            form = ActivateLoginForm()
+            return render_template("admin/activatelogin.html",
                                    form=form, html=gen)
         else:
             return render_template("admin/signup.html",
                                    form=form, html=gen)
-    form = SignupForm()
     return render_template("admin/signup.html",
                            form=form, html=gen)
 
@@ -120,40 +126,35 @@ def activatelogin():
                     'Username %s is invalid' % form['username'].value)
                 return render_template("admin/activatelogin.html",
                                        form=form, html=gen)
-            if get_activationcode(user) != request.args['activationcode']:
-                form.add_error(
-                    'incorrect user name or invalid activation code %s.' %
-                    request.args['activationcode'])
-                activationURL = "http://127.0.0.1:5000" +\
-                                url_for('activatelogin',
-                                        activationcode=get_activationcode(user))
-                #TODO:  Work around until link sent to email feature is setup.
-                form.add_error(activationURL)
-                return render_template("admin/activatelogin.html",
-                                       form=form,
-                                       html=gen)
-            user.activestatus = True
-            db.session.commit()
-            form = LoginForm()
-            return render_template("admin/login.html",
-                                   form=form,
-                                   html=gen)
+            if 'activationcode' in request.args:
+                if get_activationcode(user) == request.args['activationcode']:
+                    user.activestatus = True
+                    db.session.commit()
+                    form = LoginForm()
+                    return render_template("admin/login.html",
+                                           form=form, html=gen)
+            form.add_error('incorrect user name or invalid activation code.')
+            #TODO:  Work around until link sent to email feature is setup.
+            activationURL = url_for('activatelogin',
+                                    activationcode=get_activationcode(user),
+                                    _external=True)
+            form.add_error(activationURL)
+            return render_template("admin/activatelogin.html",
+                                   form=form, html=gen)
         else:
             return render_template("admin/activatelogin.html",
-                                   form=form,
-                                   html=gen)
+                                   form=form, html=gen)
     form = ActivateLoginForm()
     return render_template("admin/activatelogin.html",
-                           form=form,
-                           html=gen)
+                           form=form, html=gen)
 
 
 def send_activationcode(user):
     sender = 'Cockerel@Cockerel.com'
     receivers = user.email
-    activationURL = "http://127.0.0.1:5000" +\
-                    url_for('activatelogin',
-                            activationcode=get_activationcode(user))
+    activationURL = url_for('activatelogin',
+                            activationcode=get_activationcode(user),
+                            _external=True)
     message = """From: Cockerel <%s>
     To: %s %s <%s>
     Subject: Welcome to Cockerel
@@ -175,10 +176,10 @@ def send_activationcode(user):
            activationURL)
 #    TODO: Supply SMTP server information to use the email feature
 #    try:
-#       smtpObj = smtplib.SMTP('localhost')
+#       smtpObj = smtplib.SMTP('smtp.localhost')
 #       smtpObj.sendmail(sender, receivers, message)
 #       return True
 #    except smtplib.SMTPException:
 #       return False
 
-admin.before_app_request(check_user)
+admin.before_app_request(load_identity)
