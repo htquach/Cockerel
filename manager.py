@@ -34,6 +34,17 @@ def initdb():
         db.session.add(insertaction)
         db.session.add(deleteaction)
         db.session.add(editaction)
+        administrator = schema.User(username="admin",
+                                    password="admin",
+                                    firstname="admin",
+                                    lastname="admin",
+                                    email="admin@cockerel.com")
+        administrator.actions.append(readaction)
+        administrator.actions.append(insertaction)
+        administrator.actions.append(deleteaction)
+        administrator.actions.append(editaction)
+
+        db.session.add(administrator)
         db.session.commit()
 
 
