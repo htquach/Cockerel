@@ -25,8 +25,6 @@ admin = Module(__name__)
 
 @admin.route('/login', methods=['GET', 'POST'])
 def login():
-    # TODO: make this do better auth, it needs to set a cookie for a period of
-    #  time
     gen = Generator()
     if request.method == 'POST':
         form = LoginForm.from_flat(request.form)
@@ -40,13 +38,15 @@ def login():
                         It can only be activated with the link sent to email
                         of this username.""" %
                         form['username'].value)
+                    form.add_error(url_for('admin.activatelogin',
+                                           _external=True))
                     return render_template("admin/login.html",
                                            form=form, html=gen)
                 if user.check_password(request.form['password']):
                     save_identity(user)
                     identity_changed.send(cockerel.webapp.app,
                                           identity=Identity(user.username))
-                    if request.args:
+                    if 'next' in request.args:
                         return redirect(request.args.get('next'))
                     else:
                         return redirect(url_for('frontend.index'))
